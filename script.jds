@@ -1,0 +1,105 @@
+const statusEl = document.getElementById("status");
+const micBtn = document.getElementById("micBtn");
+const log = document.getElementById("log");
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const synth = window.speechSynthesis;
+
+if (!SpeechRecognition) {
+  statusEl.textContent = "Speech Recognition not supported";
+  micBtn.disabled = true;
+}
+
+const recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+recognition.interimResults = false;
+recognition.continuous = false;
+
+micBtn.onclick = () => recognition.start();
+
+recognition.onstart = () => {
+  statusEl.textContent = "Listening...";
+  micBtn.classList.add("listening");
+};
+
+recognition.onend = () => {
+  micBtn.classList.remove("listening");
+  statusEl.textContent = "Click mic and speak";
+};
+
+recognition.onresult = (event) => {
+  const speech = event.results[0][0].transcript.toLowerCase().trim();
+  log.innerHTML += `<div>🗣️ ${speech}</div>`;
+  handleSpeech(speech);
+};
+
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  synth.speak(utter);
+}
+
+function getFormattedTime() {
+  const now = new Date();
+  let hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+
+  hours = hours % 12 || 12; // 12-hour format
+  return `${hours}:${minutes} ${ampm}`;
+}
+
+function getFormattedDate() {
+  const now = new Date();
+  return now.toDateString();
+}
+
+function handleSpeech(text) {
+
+
+  if (text === "open youtube") {
+    speak("Opening YouTube");
+    log.innerHTML += `<div>▶️ Opening YouTube</div>`;
+    window.open("https://www.youtube.com", "_blank");
+    return;
+  }
+
+  if (text.includes("time")) {
+    const time = getFormattedTime();
+    speak(`The time is ${time}`);
+    log.innerHTML += `<div>🕒 Time: ${time}</div>`;
+    return;
+  }
+
+  
+  if (text.includes("date")) {
+    const date = getFormattedDate();
+    speak(`Today's date is ${date}`);
+    log.innerHTML += `<div>📅 Date: ${date}</div>`;
+    return;
+  }
+
+  const words = text.split(" ");
+  const lastWord = words[words.length - 1];
+
+
+  if (lastWord === "youtube") {
+    const query = words.slice(0, -1).join(" ");
+    speak(`Searching YouTube for ${query}`);
+    log.innerHTML += `<div>🔴 YouTube Search: ${query}</div>`;
+    window.open(
+      `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+      "_blank"
+    );
+    return;
+  }
+
+ 
+  speak(`Searching Google for ${text}`);
+  log.innerHTML += `<div>🔵 Google Search: ${text}</div>`;
+  window.open(
+    `https://www.google.com/search?q=${encodeURIComponent(text)}`,
+    "_blank"
+  );
+}
